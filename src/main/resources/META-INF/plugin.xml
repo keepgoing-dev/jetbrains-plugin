@@ -1,0 +1,50 @@
+<idea-plugin>
+    <id>com.keepgoing.plugin</id>
+    <name>KeepGoing</name>
+    <vendor>KeepGoing.dev</vendor>
+    <description><![CDATA[
+        <p>Return to unfinished projects without the mental friction.</p>
+
+        <p>KeepGoing captures development session checkpoints and shows a re-entry briefing
+        when you return to a project after a period of inactivity, helping you pick up exactly
+        where you left off.</p>
+
+        <h3>Features</h3>
+        <ul>
+            <li><b>Re-entry briefing</b>: See what you were working on, when you last worked, and your next step</li>
+            <li><b>Sidebar panel</b>: Full briefing, session history, and decisions in a tool window</li>
+            <li><b>Status bar</b>: Quick indicator showing last activity time</li>
+            <li><b>Open touched files</b>: Restore your workspace with one click</li>
+            <li><b>Lightweight</b>: Read-only companion that works alongside MCP and CLI</li>
+            <li><b>Local-first</b>: All data stays on your machine</li>
+        </ul>
+
+        <h3>How it works</h3>
+        <p>Install the <a href="https://www.npmjs.com/package/@keepgoingdev/mcp-server">KeepGoing MCP server</a>
+        or <a href="https://www.npmjs.com/package/@keepgoingdev/cli">CLI</a> to capture session checkpoints.
+        This plugin reads the checkpoint data and surfaces briefings, session history, and decisions
+        in the IDE.</p>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity
+            implementation="com.keepgoing.plugin.KeepGoingStartupActivity" />
+
+        <notificationGroup id="KeepGoing Notifications"
+            displayType="STICKY_BALLOON" />
+
+        <projectService
+            serviceImplementation="com.keepgoing.plugin.data.KeepGoingDataService" />
+
+        <toolWindow id="KeepGoing"
+            anchor="right"
+            icon="/icons/toolWindowIcon.svg"
+            factoryClass="com.keepgoing.plugin.ui.KeepGoingToolWindowFactory" />
+
+        <statusBarWidgetFactory id="KeepGoingStatusBar"
+            implementation="com.keepgoing.plugin.ui.KeepGoingStatusBarWidgetFactory"
+            order="after Position" />
+    </extensions>
+</idea-plugin>
