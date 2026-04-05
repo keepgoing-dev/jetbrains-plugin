@@ -1,3 +1,13 @@
+## 0.2.3
+
+- Fix Gradle build configuration for compatibility
+- Minor tool window UI improvement
+
+## 0.2.2
+
+- Refresh brand assets with coral-amber gradient icon
+- Add planning session indicators to tool window
+
 ## 0.2.1
 
 - Fix plugin icon by replacing SVG with base64 encoded image for better compatibility
