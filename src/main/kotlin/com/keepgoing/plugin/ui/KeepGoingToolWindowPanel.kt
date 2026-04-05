@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI
+import com.intellij.ui.JBColor
 import com.intellij.util.ui.UIUtil
 import com.keepgoing.plugin.data.BriefingGenerator
 import com.keepgoing.plugin.data.KeepGoingDataListener
@@ -150,7 +151,7 @@ class KeepGoingToolWindowPanel(private val project: Project) : Disposable {
      * at the parent's actual width, preventing layout overlap.
      */
     private fun createBriefingPane(briefing: ReEntryBriefing?, lastSession: SessionCheckpoint?): JEditorPane {
-        val isDark = UIUtil.isUnderDarcula()
+        val isDark = !JBColor.isBright()
         val grayHex = if (isDark) "#999999" else "#777777"
         val cardBg = if (isDark) "#1e3a5f" else "#eaf2fc"
         val blockerBg = if (isDark) "#3d1c1c" else "#fceaea"
