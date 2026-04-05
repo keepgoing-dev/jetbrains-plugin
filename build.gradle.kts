@@ -24,7 +24,7 @@ kotlin {
 tasks {
     patchPluginXml {
         sinceBuild.set("232")
-        untilBuild.set("251.*")
+        untilBuild.set("252.*")
         changeNotes.set(provider {
             file("CHANGELOG.md").let { f ->
                 if (f.exists()) {
