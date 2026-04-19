@@ -11,6 +11,10 @@ repositories {
     mavenCentral()
 }
 
+dependencies {
+    implementation("com.keepgoing:kotlin-shared")
+}
+
 intellij {
     pluginName.set(providers.gradleProperty("pluginName").get())
     version.set(providers.gradleProperty("platformVersion").get())

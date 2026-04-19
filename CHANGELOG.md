@@ -1,3 +1,12 @@
+## 0.3.1
+
+- Refresh documentation and README
+
+## 0.3.0
+
+- Migrate to shared kotlin-shared module with SQLite reads for keepgoing.db
+- Simplify DB reads, fix meta key names, and remove dead code
+
 ## 0.2.3
 
 - Fix Gradle build configuration for compatibility

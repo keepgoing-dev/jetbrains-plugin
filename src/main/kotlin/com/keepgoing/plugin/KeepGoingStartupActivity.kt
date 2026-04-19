@@ -11,8 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.ToolWindowManager
-import com.keepgoing.plugin.data.BriefingGenerator
 import com.keepgoing.plugin.data.KeepGoingDataService
+import com.keepgoing.shared.TimeUtils
 import java.time.Duration
 import java.time.Instant
 
@@ -40,7 +40,7 @@ class KeepGoingStartupActivity : ProjectActivity {
         val lastSession = service.lastSession
         val state = service.state
         val timestamp = state?.lastActivityAt ?: lastSession?.timestamp ?: return
-        val lastInstant = BriefingGenerator.parseTimestamp(timestamp) ?: return
+        val lastInstant = TimeUtils.parseTimestamp(timestamp) ?: return
         val daysSince = Duration.between(lastInstant, Instant.now()).toDays()
 
         if (daysSince < INACTIVITY_THRESHOLD_DAYS) return
@@ -82,7 +82,7 @@ class KeepGoingStartupActivity : ProjectActivity {
 
     private fun showNotification(
         project: Project,
-        briefing: com.keepgoing.plugin.model.ReEntryBriefing,
+        briefing: com.keepgoing.shared.model.ReEntryBriefing,
         touchedFiles: List<String>
     ) {
         val content = buildString {

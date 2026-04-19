@@ -11,13 +11,13 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.UIUtil
-import com.keepgoing.plugin.data.BriefingGenerator
 import com.keepgoing.plugin.data.KeepGoingDataListener
 import com.keepgoing.plugin.data.KeepGoingDataService
-import com.keepgoing.plugin.model.DecisionCategory
-import com.keepgoing.plugin.model.DecisionRecord
-import com.keepgoing.plugin.model.ReEntryBriefing
-import com.keepgoing.plugin.model.SessionCheckpoint
+import com.keepgoing.shared.BriefingGenerator
+import com.keepgoing.shared.TimeUtils
+import com.keepgoing.shared.model.DecisionRecord
+import com.keepgoing.shared.model.ReEntryBriefing
+import com.keepgoing.shared.model.SessionCheckpoint
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Dimension
@@ -106,8 +106,8 @@ class KeepGoingToolWindowPanel(private val project: Project) : Disposable {
 
     private fun buildDataContent(service: KeepGoingDataService): JComponent {
         val briefing = service.briefing
-        val sessions = service.sessions?.sessions ?: emptyList()
-        val decisions = service.decisions?.decisions ?: emptyList()
+        val checkpoints = service.checkpoints
+        val decisions = service.decisions
         val lastSession = service.lastSession
 
         val wrapper = JPanel(BorderLayout())
@@ -117,8 +117,8 @@ class KeepGoingToolWindowPanel(private val project: Project) : Disposable {
         wrapper.add(createBriefingPane(briefing, lastSession), BorderLayout.NORTH)
 
         // Bottom: collapsible groups via DSL (text() handles wrapping)
-        val recentSessions = sessions.takeLast(10).reversed()
-        val recentDecisions = decisions.takeLast(10).reversed()
+        val recentSessions = checkpoints.take(10)
+        val recentDecisions = decisions.take(10)
 
         if (recentSessions.isNotEmpty() || recentDecisions.isNotEmpty()) {
             wrapper.add(panel {
@@ -179,11 +179,12 @@ class KeepGoingToolWindowPanel(private val project: Project) : Disposable {
                 }
             }
 
-            if (lastSession?.blocker != null) {
+            val blocker = lastSession?.blocker
+            if (blocker != null) {
                 append("<br>")
                 append("<table width='100%' cellpadding='6' cellspacing='0'>")
                 append("<tr><td bgcolor='$blockerBg'>")
-                append("\u26A0\uFE0F Blocker: ${escapeHtml(lastSession.blocker)}")
+                append("\u26A0\uFE0F Blocker: ${escapeHtml(blocker)}")
                 append("</td></tr></table>")
             }
 
@@ -235,8 +236,8 @@ class KeepGoingToolWindowPanel(private val project: Project) : Disposable {
 
     private fun Panel.buildSessionRow(session: SessionCheckpoint) {
         row {
-            val time = BriefingGenerator.formatRelativeTime(session.timestamp)
-            val branch = session.gitBranch?.let { " &middot; ${escapeHtml(it)}" } ?: ""
+            val time = TimeUtils.formatRelativeTime(session.timestamp)
+            val branch = session.branch?.let { " &middot; ${escapeHtml(it)}" } ?: ""
             val summary = escapeHtml(session.summary.ifBlank { "No summary" })
             val nextHtml = if (session.nextStep.isNotBlank()) {
                 "<br><font color='gray'>Next: ${escapeHtml(session.nextStep)}</font>"
@@ -249,7 +250,7 @@ class KeepGoingToolWindowPanel(private val project: Project) : Disposable {
             ).applyToComponent {
                 toolTipText = buildString {
                     append("Time: $time")
-                    if (session.gitBranch != null) append("\nBranch: ${session.gitBranch}")
+                    if (session.branch != null) append("\nBranch: ${session.branch}")
                     if (session.summary.isNotBlank()) append("\nSummary: ${session.summary}")
                     if (session.nextStep.isNotBlank()) append("\nNext: ${session.nextStep}")
                     if (session.blocker != null) append("\nBlocker: ${session.blocker}")
@@ -263,12 +264,12 @@ class KeepGoingToolWindowPanel(private val project: Project) : Disposable {
 
     private fun Panel.buildDecisionRow(decision: DecisionRecord) {
         row {
-            val time = BriefingGenerator.formatRelativeTime(decision.timestamp)
+            val time = TimeUtils.formatRelativeTime(decision.timestamp)
             val category = decision.classification.category
-            val categoryName = category.name.uppercase()
+            val categoryName = category.uppercase()
             val categoryColor = DECISION_CATEGORY_COLORS[category] ?: "#6b7280"
             val message = escapeHtml(decision.commitMessage.lines().first())
-            val branch = decision.gitBranch?.let { " &middot; ${escapeHtml(it)}" } ?: ""
+            val branch = decision.branch?.let { " &middot; ${escapeHtml(it)}" } ?: ""
 
             @Suppress("DialogTitleCapitalization")
             text(
@@ -278,12 +279,12 @@ class KeepGoingToolWindowPanel(private val project: Project) : Disposable {
             ).applyToComponent {
                 toolTipText = buildString {
                     append("Commit: ${decision.commitHash.take(8)}")
-                    append("\nCategory: ${category.name}")
+                    append("\nCategory: $category")
                     append("\nConfidence: ${(decision.classification.confidence * 100).toInt()}%")
                     if (decision.classification.reasons.isNotEmpty()) {
                         append("\nReasons: ${decision.classification.reasons.joinToString("; ")}")
                     }
-                    if (decision.gitBranch != null) append("\nBranch: ${decision.gitBranch}")
+                    if (decision.branch != null) append("\nBranch: ${decision.branch}")
                     if (decision.rationale != null) append("\nRationale: ${decision.rationale}")
                 }
             }
@@ -310,6 +311,7 @@ class KeepGoingToolWindowPanel(private val project: Project) : Disposable {
             .replace("\"", "&quot;")
             .replace("'", "&#39;")
 
+    @Suppress("unused")
     private fun colorToHex(c: Color): String =
         String.format("#%02x%02x%02x", c.red, c.green, c.blue)
 
@@ -317,11 +319,11 @@ class KeepGoingToolWindowPanel(private val project: Project) : Disposable {
 
     companion object {
         private val DECISION_CATEGORY_COLORS = mapOf(
-            DecisionCategory.infra to "#f59e0b",
-            DecisionCategory.auth to "#a855f7",
-            DecisionCategory.migration to "#3b82f6",
-            DecisionCategory.deploy to "#10b981",
-            DecisionCategory.unknown to "#6b7280",
+            "infra" to "#f59e0b",
+            "auth" to "#a855f7",
+            "migration" to "#3b82f6",
+            "deploy" to "#10b981",
+            "unknown" to "#6b7280",
         )
     }
 }

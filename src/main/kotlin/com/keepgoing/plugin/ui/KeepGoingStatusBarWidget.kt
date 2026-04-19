@@ -8,8 +8,8 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.Alarm
 import com.intellij.util.Consumer
-import com.keepgoing.plugin.data.BriefingGenerator
 import com.keepgoing.plugin.data.KeepGoingDataListener
+import com.keepgoing.shared.TimeUtils
 import com.keepgoing.plugin.data.KeepGoingDataService
 import java.awt.event.MouseEvent
 
@@ -62,7 +62,7 @@ class KeepGoingStatusBarWidget(private val project: Project) : StatusBarWidget, 
         val state = service.state
         val lastSession = service.lastSession
         val timestamp = state?.lastActivityAt ?: lastSession?.timestamp ?: return "KG"
-        val relative = BriefingGenerator.formatRelativeTime(timestamp)
+        val relative = TimeUtils.formatRelativeTime(timestamp)
         return "KG: $relative"
     }
 

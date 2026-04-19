@@ -1,16 +1,21 @@
 # KeepGoing JetBrains Plugin
 
-A minimal IntelliJ Platform plugin that surfaces a **re-entry briefing** when you return to a project after a period of inactivity (default: 3+ days).
+An IntelliJ Platform plugin that surfaces momentum context when you return to a project after a period of inactivity (default: 3+ days).
+
+## Features
+
+- **Re-entry briefing**: Notification balloon on project open when you've been away 3+ days, with focus, last worked time, and next step.
+- **Sidebar panel**: Tool window (right side) showing the full briefing, session history, and decisions.
+- **Status bar indicator**: Quick last-activity timestamp in the status bar.
+- **Open last touched files**: Restore your workspace with one click from the notification.
+- **Read-only**: Never writes to `.keepgoing/` - works alongside the MCP server and CLI.
 
 ## How It Works
 
-1. **Opt-in only**: The plugin activates only for projects that contain a `.keepgoing/meta.json` file. If the file is absent, nothing happens.
-2. On project open, it reads `.keepgoing/state.json` and `.keepgoing/sessions.json` to determine when you last worked on the project.
-3. If the inactivity threshold is met (>= 3 days), a notification balloon appears with:
-   - **Last worked**: A human-readable time string (e.g. "5 days ago").
-   - **Project intent**: The high-level goal, if recorded.
-   - **Next step**: The suggested next action from your last session.
-   - **Open last touched files**: A button that opens the files you last edited, using IntelliJ's `FileEditorManager`.
+1. **Opt-in only**: The plugin activates only for projects that contain a `.keepgoing/` directory. If absent, a one-time "Get Started" prompt appears.
+2. On project open, reads `.keepgoing/` data - SQLite DB first, JSON files as fallback.
+3. If the inactivity threshold is met (>= 3 days), a notification balloon appears.
+4. The sidebar panel and status bar widget stay live, refreshing on file changes and every 30 seconds.
 
 ## Prerequisites
 
@@ -99,7 +104,7 @@ The resulting ZIP is placed in `build/distributions/`.
 ## Target IntelliJ Version
 
 - **Since build**: 232 (IntelliJ 2023.2)
-- **Until build**: 251.* (IntelliJ 2025.1.x)
+- **Until build**: 252.* (IntelliJ 2025.2.x)
 
 ## Project Structure
 
@@ -107,11 +112,16 @@ The resulting ZIP is placed in `build/distributions/`.
 apps/jetbrains-plugin/
 ├── build.gradle.kts              # Gradle build with IntelliJ Plugin configuration
 ├── gradle.properties             # Plugin and platform versions
-├── settings.gradle.kts           # Gradle settings
-├── README.md                     # This file
+├── settings.gradle.kts           # Composite build includes libs/kotlin-shared
 └── src/main/
     ├── kotlin/com/keepgoing/plugin/
-    │   └── KeepGoingStartupActivity.kt   # Main plugin logic
+    │   ├── KeepGoingStartupActivity.kt   # Entry point: re-entry notification on project open
+    │   ├── data/
+    │   │   └── KeepGoingDataService.kt   # Project service: reads/caches/watches .keepgoing/ data
+    │   └── ui/
+    │       ├── KeepGoingToolWindowFactory.kt  # Sidebar panel factory
+    │       ├── KeepGoingToolWindowPanel.kt    # Sidebar panel content
+    │       └── KeepGoingStatusBarWidget.kt    # Status bar indicator
     └── resources/META-INF/
-        └── plugin.xml            # Plugin descriptor
+        └── plugin.xml            # Plugin descriptor and extension point registrations
 ```
